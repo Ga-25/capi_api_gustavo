@@ -11,6 +11,8 @@ app.use(express.json());
 // variáveis (defina no Render)
 const PIXEL_ID = process.env.PIXEL_ID;                      // primary
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;              // primary token
+const BACKUP_PIXEL_ID = process.env.BACKUP_PIXEL_ID || "";  // opcional
+const BACKUP_ACCESS_TOKEN = process.env.BACKUP_ACCESS_TOKEN || ""; // opcional
 const API_VERSION = process.env.API_VERSION || "v19.0";
 const TEST_EVENT_CODE = process.env.TEST_EVENT_CODE || null; // opcional
 
@@ -71,8 +73,14 @@ app.post("/event", async (req, res) => {
     // envia para pixel primário
     const primaryResp = await sendToPixel(PIXEL_ID, ACCESS_TOKEN, payload);
 
+    // envia para pixel backup (opcional)
+    let backupResp = null;
+    if (BACKUP_PIXEL_ID && BACKUP_ACCESS_TOKEN) {
+      backupResp = await sendToPixel(BACKUP_PIXEL_ID, BACKUP_ACCESS_TOKEN, payload);
+    }
+
     // resposta para debug
-    return res.json({ ok: true, primary: primaryResp });
+    return res.json({ ok: true, primary: primaryResp, backup: backupResp });
   } catch (err) {
     console.error("Erro CAPI:", err);
     return res.status(500).json({ error: "Erro ao enviar evento para CAPI", details: String(err) });
